@@ -66,6 +66,20 @@ npm run dev
 | 负载均衡策略 | `balance` | 均衡策略 | 策略编号、策略名称、均衡算法 |
 | 服务版本回退 | `rollback` | 版本快照 | 快照编号、服务名称、版本号 |
 
+## 采集窗口与诊断引用
+
+服务指标采集按「监控对象 + 指标名称 + 采集间隔」组合定位采集器，并按窗口序号查看采集结果：
+
+- `GET /api/metric/locate?monitor_object=…&metric_name=…&interval=…`：组合定位唯一采集器；
+- `GET /api/metric/{id}/windows?window_from=…&window_to=…`：按窗口序号返回采样快照与聚合方式，
+  缺失窗口保留序号并标为「缺失」，不回填最近一次采集；
+- `GET /api/metric/{id}/batches?window_no=…`：查看批次；同一窗口只有一个有效批次，旧批次转为历史批次仍可追溯；
+- `POST /api/metric/{id}/batches`：登记采集批次，重复提交同一窗口时自动把原有效批次降为历史批次；
+- 服务健康诊断按 `指标采集器` + `采集窗口序号` 引用同一份采集结果，窗口缺失时健康分值与判定均为「不可判定」。
+
+以 `METR-0002`（订单服务集群 / 订单创建失败率 / 1m）为例，浏览窗口 1–2 时窗口 1 有有效批次 `BATCH-0006`
+（`BATCH-0005` 为同窗口历史批次），窗口 2 为缺失窗口，可直接调用 `GET /api/metric/2/windows`。
+
 ## 约定
 
 - 每个模块的前端页面在 `frontend/src/views/<模块>/index.vue`，后端接口在
